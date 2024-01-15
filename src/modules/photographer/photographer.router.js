@@ -1,0 +1,11 @@
+import { Router } from "express";
+import * as photographerController from "./photographer.controller.js";
+import fileUpload, { fileValidation } from "../../services/multer.js";
+import { asyncHandler } from "../../services/errorHandling.js";
+import { endPoint } from "./photographer.endpoint.js";
+import { auth } from "../../middleware/auth.js";
+const router = Router();
+router.post( "/insertPhotographer",auth(endPoint.insert),fileUpload(fileValidation.image).single("image"),asyncHandler(photographerController.insertPhotographer));
+router.get("/getPhotographers",auth(endPoint.get),asyncHandler(photographerController.getPhotographers));
+router.delete("/deletePhotographer/:id",auth(endPoint.delete),photographerController.deletePhotographer);
+export default router;
