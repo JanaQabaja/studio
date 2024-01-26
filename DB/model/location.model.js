@@ -1,4 +1,7 @@
+// import { date, string } from "joi";
 import mongoose, { Schema, model, Types } from "mongoose";
+import * as Joi from 'joi';
+
 const locationSchema = new Schema(
   {
     placeName: {
@@ -19,6 +22,13 @@ const locationSchema = new Schema(
       type: Number,
       required: true,
     },
+    appointments: [
+      {
+        day: { type: String, required: true },
+        date: { type:Date, required: true },
+        hour: { type:String, required: true },
+      },
+    ],
     // slug: {
     //   type: String,
     //   required: true,

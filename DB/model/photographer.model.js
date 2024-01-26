@@ -1,4 +1,6 @@
 import mongoose, { Schema, model } from "mongoose";
+import Joi from 'joi';
+
 const photographerShema = new Schema(
   {
     name: {
@@ -28,6 +30,13 @@ const photographerShema = new Schema(
       default: "Available",
       enum: ["Available", "Unavailable"],
     },
+    appointments: [
+      {
+        day: { type:String, required: true },
+        date: { type:Date, required: true },
+        hour: { type:String, required: true },
+      },
+    ],
   },
   {
     timestamps: true,

@@ -4,4 +4,5 @@ export const endPoint = {
  insert: [roles.Admin],
   get: [roles.Admin],
   delete: [roles.Admin],
+  appointment:[roles.Admin],
 };

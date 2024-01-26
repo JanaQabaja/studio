@@ -1,5 +1,4 @@
 import 'dotenv/config'
-
 import express from 'express';
 import initApp from './src/modules/app.router.js';
 
@@ -14,3 +13,4 @@ app.listen(PORT, ()=>{
 console.log(`server is running... ${PORT}`)
 
 })
+
