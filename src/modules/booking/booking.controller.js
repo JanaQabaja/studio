@@ -5,7 +5,78 @@ import locationModel from "../../../DB/model/location.model.js";
 import photographerModel from "../../../DB/model/photographer.model.js";
 
 export const booking = async (req, res, next) => {
-  //coupon
+
+  //price and appointment
+
+  let TotalPrice = 0;
+ 
+
+  for (let location of req.body.locations) {
+    const checkLocation = await locationModel.findOne({_id:location.locationId});
+    if (!checkLocation) {
+      return next(new Error(`Location ${location.locationId} doesn't exist`));
+    }
+    const appointmentDateFromBody = new Date(location.appointment.date);
+
+  // Check if the appointment exists in the appointments array
+  const appointmentExists = checkLocation.appointments.some(appointment => {
+    return (
+      appointment.day === location.appointment.day &&
+      appointment.date.getTime() === appointmentDateFromBody.getTime() &&
+      appointment.hour === location.appointment.hour
+    );
+  });
+ 
+
+    if(!appointmentExists){
+return next(new Error(`This Location ${location.locationId} appointment is not available`));
+
+    }else{
+      const appointmentIndex = checkLocation.appointments.indexOf(location.appointment);
+          // The appointment exists, remove it
+          checkLocation.appointments.splice(appointmentIndex, 1);
+       
+      }
+TotalPrice=TotalPrice+checkLocation.price;
+await checkLocation.save(); // Save the updated document
+  }
+
+
+
+
+  for (let photographer of  req.body.photographers) {
+    const checkphotographer = await photographerModel.findOne({_id:photographer.photographerId});
+    if (!checkphotographer) {
+      return next(new Error(`photographer ${photographer.photographerId} doesn't exist`));
+    }
+    const appointmentDateFromBody = new Date(photographer.appointment.date);
+
+    // Check if the appointment exists in the appointments array
+    const appointmentExists = checkphotographer.appointments.some(appointment => {
+      return (
+        appointment.day === photographer.appointment.day &&
+        appointment.date.getTime() === appointmentDateFromBody.getTime() &&
+        appointment.hour === photographer.appointment.hour
+      );
+    });
+    if(!appointmentExists){
+return next(new Error(`this photographer ${photographer.photographerId} appointment is not available`));
+    }else{
+      const appointmentIndex = checkphotographer.appointments.indexOf(photographer.appointment);
+          // The appointment exists, remove it
+          checkphotographer.appointments.splice(appointmentIndex, 1);
+          // Save the updated document
+      }
+      TotalPrice=TotalPrice+checkphotographer.price;
+      await checkphotographer.save();
+    }
+    const user = await userModel.findById(req.user._id);
+    if (!req.body.phoneNumber) {
+      req.body.phoneNumber = user.phone;
+    }
+
+      //coupon
+
   const { couponName } = req.body;
   if (couponName) {
     const coupon = await couponModel.findOne({ name: couponName });
@@ -20,44 +91,9 @@ export const booking = async (req, res, next) => {
       return next(new Error(`coupon already used`, { cause: 409 }));
     }
     req.body.coupon = coupon;
+    TotalPrice =TotalPrice-(TotalPrice*(coupon.amount/100))
   }
-  //price and appointment
-
-  let TotalPrice = 0;
-  for (let location of req.body.locations) {
-    const checkLocation = await locationModel.findOne({_id:location.locationId});
-    if (!checkLocation) {
-      return next(new Error(`Location ${location.locationId} doesn't exist`));
-    }
-    if(!(checkLocation.appointments.includes(location.appointment))){
-return next(new Error(`This Location ${location.locationId} appointment is not available`));
-    }else{
-      const appointmentIndex = checkLocation.appointments.indexOf(location.appointment);
-          // The appointment exists, remove it
-          checkLocation.appointments.splice(appointmentIndex, 1);
-          await checkLocation.save(); // Save the updated document
-      }
-TotalPrice=TotalPrice+checkLocation.price;
-  }
-  for (let photographer of req.body.photographers) {
-    const checkphotographer = await photographerModel.findOne({_id:photographer.photographerId});
-    if (!checkphotographer) {
-      return next(new Error(`photographer ${photographer.photographerId} doesn't exist`));
-    }
-    if(!(checkphotographer.appointments.includes(photographer.appointment))){
-return next(new Error(`this photographer ${photographer.photographerId} appointment is not available`));
-    }else{
-      const appointmentIndex = checkphotographer.appointments.indexOf(photographer.appointment);
-          // The appointment exists, remove it
-          checkphotographer.appointments.splice(appointmentIndex, 1);
-          await checkphotographer.save(); // Save the updated document
-      }
-      TotalPrice=TotalPrice+checkphotographer.price;
-    }
-    const user = await userModel.findById(req.user._id);
-    if (!req.body.phoneNumber) {
-      req.body.phoneNumber = user.phone;
-    }
+    
     const booking1 = await bookingModel.create({
       userId: req.user._id,
       locations: req.body.locations,
@@ -65,9 +101,11 @@ return next(new Error(`this photographer ${photographer.photographerId} appointm
       finalPrice: TotalPrice,
       phoneNumber: req.body.phoneNumber,
       couponName: req.body.couponName ?? "",
-      paymentType:req.body.paymentType?? "",
+      paymentType:req.body.paymentType?? "cash",
 
     });
+
+    
     if (req.body.coupon) {
       await couponModel.updateOne(
         { _id: req.body.coupon._id },
@@ -81,17 +119,7 @@ return next(new Error(`this photographer ${photographer.photographerId} appointm
   
   }
 
-// const appointmentIndex = checkphotographer.appointments.indexOf(photographer.appointment);
-// if (appointmentIndex === -1) {
-//     // The appointment doesn't exist
-//     return next(new Error(`This photographer ${photographer.photographerId} appointment is not available`));
-// } else {
-//     // The appointment exists, remove it
-//     checkphotographer.appointments.splice(appointmentIndex, 1);
-//     await checkphotographer.save(); // Save the updated document
-// }
-//لحذف الموعد
-  
+
 
 export const cancelReservation = async (req, res, next) => {
   const { bookingId } = req.params;
@@ -105,39 +133,44 @@ export const cancelReservation = async (req, res, next) => {
  
   req.body.status = "cancelled";
   req.body.updatedBy = req.user._id;
-  const newbook = await bookingModel.findByIdAndUpdate(bookingId, req.body, {
-    new: true,
-  });
- 
-  if (order.couponName) {
+  
+  if (reservation.couponName) {
     await couponModel.updateOne(
-      { name: order.couponName },
+      { name: reservation.couponName },
       { $pull: { usedBy: req.user._id } }
     );
     }
     //return the res appointment
-   const location = await locationModel.find();
-  for (let loc of locationModel.locations) {
+   
+  for (let loc of reservation.locations) {
+    const location = await locationModel.findById(loc.locationId);
     if(!(location.appointments.includes(loc.appointment))){
     location.appointments.push(loc.appointment);
+    await location.save();
     }
   }
-  await location.save();
-  const photographer = await photographerModel.find();
+  
+ 
   for (let phot of reservation.photographers) {
+    const photographer = await photographerModel.findById(phot.photographerId);
     if(!(photographer.appointments.includes(phot.appointment))){
     photographer.appointments.push(phot.appointment);
+    await photographer.save();
     }
   }
-  await photographer.save();
-  //
+  
+  //ممكن اغير الكود بعدين  يصير ما يحذف بشكل نهائي يغير الستيتس واضيق get available reservation
+  const newbook = await bookingModel.findByIdAndDelete(bookingId, req.body, {
+    new: true,
+  });
+ 
   return res.json({ message: "success", reservation: newbook });
 };
 
 
 
-export const getReservations = async (req, res, next) => {
-  const resv = await bookingModel.find({ userId: req.user._id });
+export const getReservation = async (req, res, next) => {
+  const resv = await bookingModel.find();
   return res.status(200).json({ message: "success", resv });
 };
 

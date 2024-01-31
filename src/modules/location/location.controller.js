@@ -17,7 +17,14 @@ export const insertLocation = async (req, res, next) => {
   if (await locationModel.findOne({ placeName })) {
     return next(new Error(`place name already exists`, { cause: 409 }));
   }
-  
+  const appointmentsData = JSON.parse(req.body.appointments);
+
+  for (const appointment of appointmentsData) {
+    const appointmentDate = new Date(appointment.date);
+    if (appointmentDate <= new Date()) { 
+      return next(new Error(`date is not available`, { cause: 409 }));
+    }
+  }
 
   const { secure_url, public_id } = await cloudinary.uploader.upload(req.file.path,{folder:`${process.env.APP_NAME}/locations`,});
   const location = await locationModel.create({
@@ -26,7 +33,9 @@ export const insertLocation = async (req, res, next) => {
     image: { secure_url, public_id },
     appointments:JSON.parse(req.body.appointments),
    
+   
   });
+
   return res.status(201).json({ message: "success",location });
 };
 
@@ -64,8 +73,16 @@ export const addAppointments = async(req,res,next)=>{
   if (!location) {
     return next( new Error(`invalid location id ${req.params.id}`, { status: 404 }));}
 
-  for (let appointment of req.body.appointments) {
-  location.appointments.push(appointment);
+  // for (let appointment of req.body.appointments) {
+  // location.appointments.push(appointment);
+  // }
+  const appointmentsData =req.body.appointments;
+  for (const appointment of appointmentsData) {
+    const appointmentDate = new Date(appointment.date);
+    if (appointmentDate <= new Date()) { 
+      return next(new Error(`date is not available`, { cause: 409 }));
+    }
+    location.appointments.push(appointment);
   }
   await location.save();
   return res.status(200).json({ message: "success" });

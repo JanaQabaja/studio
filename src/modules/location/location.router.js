@@ -9,10 +9,10 @@ import { validation } from "../../middleware/validation.js";
 const router = Router();
 router.get("/",asyncHandler(locationsController.getlocations));
 router.get("/Available", asyncHandler(locationsController.getAvailableLocations));
-router.post("/",validation(validators.appointment ),auth(endPoint.create), fileUpload(fileValidation.image).single("image"),
+router.post("/",auth(endPoint.create), fileUpload(fileValidation.image).single("image"),
   asyncHandler(locationsController.insertLocation));
 router.put("/:id",auth(endPoint.update), fileUpload(fileValidation.image).single("image"),
 asyncHandler(locationsController.updateLocation));
 router.delete( "/:locationId",auth(endPoint.delete),asyncHandler(locationsController.deleteLocation));
-router.put("/addAppointments/:id",validation(validators.appointment),auth(endPoint.appointment),asyncHandler(locationsController.addAppointments));
+router.put("/addAppointments/:id",auth(endPoint.appointment),asyncHandler(locationsController.addAppointments));
 export default router;

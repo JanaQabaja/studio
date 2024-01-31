@@ -9,10 +9,12 @@ export const createCoupon = async (req, res) => {
   const coupon = await couponModel.create(req.body);
   return res.status(201).json({ message: "success", coupon });
 };
+
 export const getCoupons = async (req, res) => {
-  const coupons = await couponModel.find({ isDeleted: false });
+  const coupons = await couponModel.find({ isDeleted:false });
   return res.status(200).json({ message: "success", coupons });
 };
+
 export const updateCoupon = async (req, res) => {
   const coupon = await couponModel.findById(req.params.id);
   if (!coupon) {
@@ -45,6 +47,8 @@ export const softDelete = async (req, res) => {
   }
   return res.status(200).json({ message: "success" });
 };
+
+
 export const hardDelete = async (req, res) => {
   const { id } = req.params;
   const coupon = await couponModel.findOneAndDelete({ _id: id });
@@ -53,6 +57,8 @@ export const hardDelete = async (req, res) => {
   }
   return res.status(200).json({ message: "success" });
 };
+
+
 export const restore = async (req, res) => {
   const { id } = req.params;
   const coupon = await couponModel.findOneAndUpdate(

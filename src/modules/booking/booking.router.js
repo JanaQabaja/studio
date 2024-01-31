@@ -7,8 +7,8 @@ import { validation } from "../../middleware/validation.js";
 import * as validators from './booking.validation.js'
 const router = Router();
 
-router.post("/booking",validation(validators.createBooking ),auth(endPoint.create),asyncHandler(bookingController.booking));
-router.patch('/cancel/:reservationId',auth(endPoint.cancel),asyncHandler(bookingController.cancelReservation));
-router.get('/',auth(endPoint.get),asyncHandler(bookingController.getReservation));
+router.post("/booking",auth(endPoint.create),asyncHandler(bookingController.booking));
+router.patch('/cancel/:bookingId',auth(endPoint.cancel),asyncHandler(bookingController.cancelReservation));
+router.get('/',asyncHandler(bookingController.getReservation));
 //router.patch('/changeStatus/:orderId',auth(endPoint.change),asyncHandler(orderController.changeStatus));
 export default router;
