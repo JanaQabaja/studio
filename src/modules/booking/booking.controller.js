@@ -10,7 +10,7 @@ export const booking = async (req, res, next) => {
 
   let TotalPrice = 0;
  
-
+  if (req.body.locations) {
   for (let location of req.body.locations) {
     const checkLocation = await locationModel.findOne({_id:location.locationId});
     if (!checkLocation) {
@@ -41,9 +41,9 @@ TotalPrice=TotalPrice+checkLocation.price;
 await checkLocation.save(); // Save the updated document
   }
 
+  }
 
-
-
+  if(req.body.photographers){
   for (let photographer of  req.body.photographers) {
     const checkphotographer = await photographerModel.findOne({_id:photographer.photographerId});
     if (!checkphotographer) {
@@ -69,7 +69,7 @@ return next(new Error(`this photographer ${photographer.photographerId} appointm
       }
       TotalPrice=TotalPrice+checkphotographer.price;
       await checkphotographer.save();
-    }
+    }}
     const user = await userModel.findById(req.user._id);
     if (!req.body.phoneNumber) {
       req.body.phoneNumber = user.phone;
